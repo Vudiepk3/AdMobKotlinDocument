@@ -10,16 +10,26 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import com.example.admobkotlindocument.databinding.ActivityMainBinding
-import com.google.android.gms.ads.*
+import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdView
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 
 class MainActivity : BaseActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var interstitialAd: InterstitialAd? = null
+    private var rewardedAd: RewardedAd? = null
+    private var rewardedInterstitialAd: RewardedAd? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,8 +63,20 @@ class MainActivity : BaseActivity() {
                 Toast.makeText(this, "Không có kết nối Internet!", Toast.LENGTH_SHORT).show()
             }
         }
+        loadRewardedAd()// Tải quảng cáo khi ứng dụng khởi động
+        binding.btnRewardedAds.setOnClickListener {
+            if (isInternetAvailable()) {
+                showRewardedAd()
+            } else {
+                Toast.makeText(this, "Không có kết nối Internet!", Toast.LENGTH_SHORT).show()
+            }
+        }
+//        loadRewardedInterstitialAd() // Tải quảng cáo khi ứng dụng khởi động
+//
+//        binding.btnRewardedAds.setOnClickListener {
+//            showRewardedInterstitialAd()
+//        }
 
-        // Kiểm tra Internet và tải quảng cáo khi mở app
         if (isInternetAvailable()) {
             loadInterstitialAd()
         } else {
@@ -62,7 +84,6 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    // 🛠 Kiểm tra kết nối Internet
     private fun isInternetAvailable(): Boolean {
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = connectivityManager.activeNetwork ?: return false
@@ -76,40 +97,65 @@ class MainActivity : BaseActivity() {
         binding.bannerAdView.loadAd(adRequest)
         binding.bannerAdView.adListener = object : AdListener() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
-                Toast.makeText(this@MainActivity, "Banner Ad Failed: ${adError.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "Không thể tải quảng cáo banner: ${adError.message}", Toast.LENGTH_SHORT).show()
             }
 
             override fun onAdLoaded() {
-                Toast.makeText(this@MainActivity, "Banner Ad Loaded", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "Quảng cáo banner đã tải thành công!", Toast.LENGTH_SHORT).show()
             }
         }
     }
-    // Phuong thuc load interstitial ad
+// Chi load quang cao 1 lan
+//    private fun loadInterstitialAd() {
+//        val adRequest = AdRequest.Builder().build()
+//        InterstitialAd.load(this, "ca-app-pub-3940256099942544/1033173712", adRequest, object : InterstitialAdLoadCallback() {
+//            override fun onAdLoaded(ad: InterstitialAd) {
+//                interstitialAd = ad
+//                Log.d("AdMob", "Quảng cáo xen kẽ đã tải thành công!")
+//            }
+//
+//            override fun onAdFailedToLoad(adError: LoadAdError) {
+//                interstitialAd = null
+//                Toast.makeText(this@MainActivity, "Không thể tải quảng cáo xen kẽ: ${adError.message}", Toast.LENGTH_LONG).show()
+//                Log.d("AdMob", "onAdFailedToLoad: ${adError.message}")
+//            }
+//        })
+//    }
+
     private fun loadInterstitialAd() {
         val adRequest = AdRequest.Builder().build()
         InterstitialAd.load(this, "ca-app-pub-3940256099942544/1033173712", adRequest, object : InterstitialAdLoadCallback() {
             override fun onAdLoaded(ad: InterstitialAd) {
                 interstitialAd = ad
-                Log.d("AdMob", "Interstitial Ad Loaded")
+                Log.d("AdMob", "Quảng cáo xen kẽ đã tải thành công!")
+
+                // Khi quảng cáo đóng, tải lại quảng cáo mới
+                interstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    override fun onAdDismissedFullScreenContent() {
+                        Log.d("AdMob", "Quảng cáo xen kẽ đã đóng, tải lại quảng cáo mới.")
+                        interstitialAd = null
+                        loadInterstitialAd() // Tải lại quảng cáo ngay khi nó đóng
+                    }
+                }
             }
 
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 interstitialAd = null
-                Toast.makeText(this@MainActivity, "Interstitial Ad lỗi: ${adError.message}", Toast.LENGTH_LONG).show()
-                Log.d("AdMob", "onAdFailedToLoad: ${adError.message}")
+                Toast.makeText(this@MainActivity, "Không thể tải quảng cáo xen kẽ: ${adError.message}", Toast.LENGTH_LONG).show()
             }
         })
     }
-
+    // Hiển thị quảng cáo xen kẽ
     private fun showInterstitialAd() {
         if (interstitialAd != null) {
             interstitialAd?.show(this)
         } else {
-            Toast.makeText(this, "Quảng cáo chưa sẵn sàng!", Toast.LENGTH_SHORT).show()
-            loadInterstitialAd()
+            Toast.makeText(this, "Quảng cáo xen kẽ chưa sẵn sàng!", Toast.LENGTH_SHORT).show()
+            loadInterstitialAd() // Tải lại nếu chưa có quảng cáo
         }
     }
-    // Phuong thuc load native ad
+
+    // Sử dụng AdLoader để tải quảng cáo gốc
     private fun loadNativeAd() {
         val adLoader = AdLoader.Builder(this, "ca-app-pub-3940256099942544/2247696110")
             .forNativeAd { nativeAd ->
@@ -120,7 +166,7 @@ class MainActivity : BaseActivity() {
             }
             .withAdListener(object : AdListener() {
                 override fun onAdFailedToLoad(error: LoadAdError) {
-                    Log.e("AdMob", "Native Ad Failed: ${error.message}")
+                    Log.e("AdMob", "Không thể tải quảng cáo gốc: ${error.message}")
                 }
             })
             .build()
@@ -137,4 +183,93 @@ class MainActivity : BaseActivity() {
         }
         adView.setNativeAd(nativeAd)
     }
+
+    private fun loadRewardedAd() {
+        val adRequest = AdRequest.Builder().build()
+        RewardedAd.load(
+            this@MainActivity,
+            "ca-app-pub-3940256099942544/5224354917",
+            adRequest,
+            object : RewardedAdLoadCallback() {
+                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                    super.onAdFailedToLoad(loadAdError)
+                    rewardedAd = null
+                    Toast.makeText(this@MainActivity, "Rewarded ad load failed", Toast.LENGTH_SHORT)
+                        .show()
+                }
+
+                override fun onAdLoaded(rewardedAd: RewardedAd) {
+                    super.onAdLoaded(rewardedAd)
+                    this@MainActivity.rewardedAd = rewardedAd
+                    binding.btnRewardedAds.setEnabled(true)
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Rewarded ad loaded successfully!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            })
+    }
+
+    private fun showRewardedAd() {
+        if (rewardedAd != null) {
+            rewardedAd!!.show(
+                this@MainActivity
+            ) {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Ad shown successfully!",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+    private fun loadRewardedInterstitialAd() {
+        val adRequest = AdRequest.Builder().build()
+        RewardedAd.load(
+            this,
+            "ca-app-pub-3940256099942544/5354046379", // ID test của Google
+            adRequest,
+            object : RewardedAdLoadCallback() {
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    rewardedInterstitialAd = null
+                    Log.e("AdMob", "Không thể tải quảng cáo có thưởng: ${adError.message}")
+                }
+
+                override fun onAdLoaded(ad: RewardedAd) {
+                    rewardedInterstitialAd = ad
+                    Log.d("AdMob", "Quảng cáo có thưởng đã tải thành công!")
+                }
+            }
+        )
+    }
+    private fun showRewardedInterstitialAd() {
+        if (rewardedInterstitialAd != null) {
+            rewardedInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    rewardedInterstitialAd = null
+                    loadRewardedInterstitialAd()
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                    rewardedInterstitialAd = null
+                    loadRewardedInterstitialAd()
+                }
+            }
+            rewardedInterstitialAd?.show(this) { rewardItem ->
+                val rewardAmount = rewardItem.amount
+                val rewardType = rewardItem.type
+                Toast.makeText(this, "Bạn nhận được $rewardAmount $rewardType!", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(this, "Quảng cáo có thưởng chưa sẵn sàng!", Toast.LENGTH_SHORT).show()
+            loadRewardedInterstitialAd()
+        }
+    }
+    // Khi quay lại ứng dụng, hiển thị quảng cáo mở
+    override fun onRestart() {
+        super.onRestart()
+        (application as MyApplication).showAppOpenAd(this)
+    }
+
 }

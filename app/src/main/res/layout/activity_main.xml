@@ -52,6 +52,29 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
+    <Button
+        android:id="@+id/btnRewardedAds"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:enabled="false"
+        android:text="Rewarded ads"
+        app:layout_constraintWidth_percent="0.8"
+        app:layout_constraintTop_toBottomOf="@id/btnInterstitial"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <Button
+        android:id="@+id/btnRewardedInterAds"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:text="Rewarded  Inter ads"
+        app:layout_constraintWidth_percent="0.8"
+        app:layout_constraintTop_toBottomOf="@id/btnInterstitial"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
     <com.google.android.gms.ads.AdView
         android:id="@+id/banner_ad_view"
         android:layout_width="wrap_content"
@@ -63,6 +86,7 @@
         app:layout_constraintTop_toBottomOf="@id/btnNative"
         tools:layout_editor_absoluteX="37dp"
         tools:ignore="MissingConstraints" />
+
 
     <FrameLayout
         android:id="@+id/native_ad_container"
