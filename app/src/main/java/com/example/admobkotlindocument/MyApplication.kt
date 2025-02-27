@@ -1,11 +1,12 @@
 package com.example.admobkotlindocument
 
 import android.app.Application
+import android.content.Intent
 import android.util.Log
-import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.appopen.AppOpenAd
 
 // MyApplication kế thừa từ Application để quản lý quảng cáo mở ứng dụng (App Open Ad)
 class MyApplication : Application() {
@@ -68,6 +69,9 @@ class MyApplication : Application() {
                     // Khi người dùng đóng quảng cáo, đặt lại trạng thái và tải quảng cáo mới
                     isAdShowing = false
                     loadAppOpenAd()
+                    val intent = Intent(activity, MainActivity2::class.java)
+                    activity.startActivity(intent)
+
                 }
 
                 override fun onAdFailedToShowFullScreenContent(error: com.google.android.gms.ads.AdError) {

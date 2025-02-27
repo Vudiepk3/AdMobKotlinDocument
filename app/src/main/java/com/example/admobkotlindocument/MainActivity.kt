@@ -1,12 +1,15 @@
 package com.example.admobkotlindocument
 
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import com.example.admobkotlindocument.databinding.ActivityMainBinding
@@ -18,6 +21,8 @@ import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.gms.ads.nativead.AdChoicesView
+import com.google.android.gms.ads.nativead.MediaView
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdView
 import com.google.android.gms.ads.rewarded.RewardedAd
@@ -135,6 +140,8 @@ class MainActivity : BaseActivity() {
                         Log.d("AdMob", "Quảng cáo xen kẽ đã đóng, tải lại quảng cáo mới.")
                         interstitialAd = null
                         loadInterstitialAd() // Tải lại quảng cáo ngay khi nó đóng
+                        val intent = Intent(this@MainActivity, MainActivity2::class.java)
+                        startActivity(intent)
                     }
                 }
             }
@@ -175,17 +182,70 @@ class MainActivity : BaseActivity() {
     }
 
     private fun populateNativeAdView(nativeAd: NativeAd, adView: NativeAdView) {
-        adView.findViewById<TextView>(R.id.ad_headline).text = nativeAd.headline
-        adView.findViewById<TextView>(R.id.ad_body).text = nativeAd.body ?: ""
-        adView.findViewById<Button>(R.id.ad_call_to_action).apply {
-            text = nativeAd.callToAction
-            visibility = if (nativeAd.callToAction != null) View.VISIBLE else View.GONE
+        binding.nativeAdContainer.setBackgroundResource(R.drawable.border_ad_container);
+        // Gán tiêu đề quảng cáo (BẮT BUỘC)
+        adView.findViewById<TextView>(R.id.ad_headline)?.apply {
+            text = nativeAd.headline
+            adView.headlineView = this
         }
+
+        // Gán nội dung mô tả (có thể null)
+        adView.findViewById<TextView>(R.id.ad_body)?.apply {
+            text = nativeAd.body ?: ""
+            visibility = if (nativeAd.body != null) View.VISIBLE else View.GONE
+            adView.bodyView = this
+        }
+
+        // Gán tên nhà quảng cáo (có thể null)
+        adView.findViewById<TextView>(R.id.ad_advertiser)?.apply {
+            text = nativeAd.advertiser ?: ""
+            visibility = if (nativeAd.advertiser != null) View.VISIBLE else View.GONE
+            adView.advertiserView = this
+        }
+
+        // Gán nút CTA (Call to Action) (có thể null)
+        adView.findViewById<Button>(R.id.ad_call_to_action)?.apply {
+            text = nativeAd.callToAction ?: ""
+            visibility = if (nativeAd.callToAction != null) View.VISIBLE else View.GONE
+            adView.callToActionView = this
+        }
+
+        // Gán icon nhà quảng cáo (có thể null)
+        nativeAd.icon?.let { icon ->
+            adView.findViewById<ImageView>(R.id.ad_icon)?.apply {
+                setImageDrawable(icon.drawable)
+                visibility = View.VISIBLE
+            }
+        } ?: run {
+            adView.findViewById<ImageView>(R.id.ad_icon)?.visibility = View.GONE
+        }
+        adView.iconView = adView.findViewById(R.id.ad_icon)
+
+        // Gán MediaView (video hoặc hình ảnh)
+        adView.findViewById<MediaView>(R.id.ad_media)?.let { mediaView ->
+            adView.mediaView = mediaView
+        }
+
+        // Gán AdChoices Overlay (nếu có)
+        adView.findViewById<FrameLayout>(R.id.ad_choices_container)?.let { adChoicesContainer ->
+            val adChoicesView = AdChoicesView(adView.context)
+            adChoicesContainer.removeAllViews()
+            adChoicesContainer.addView(adChoicesView)
+        }
+
+        // Gán badge "Ad" (cố định)
+        adView.findViewById<TextView>(R.id.ad_badge)?.apply {
+            visibility = View.VISIBLE
+        }
+
+        // Đánh dấu đây là một Native Ad
         adView.setNativeAd(nativeAd)
     }
 
+
     private fun loadRewardedAd() {
         val adRequest = AdRequest.Builder().build()
+
         RewardedAd.load(
             this@MainActivity,
             "ca-app-pub-3940256099942544/5224354917",
@@ -267,9 +327,9 @@ class MainActivity : BaseActivity() {
         }
     }
     // Khi quay lại ứng dụng, hiển thị quảng cáo mở
-    override fun onRestart() {
-        super.onRestart()
-        (application as MyApplication).showAppOpenAd(this)
-    }
+//    override fun onRestart() {
+//        super.onRestart()
+//        (application as MyApplication).showAppOpenAd(this)
+//    }
 
 }
