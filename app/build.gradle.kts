@@ -38,8 +38,9 @@ android {
 }
 
 dependencies {
-
+    implementation("com.github.DinoLibrary:Ads:1.0.0")
     implementation("com.google.android.gms:play-services-ads:24.0.0")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -48,4 +49,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    implementation("com.applovin:applovin-sdk:13.0.0")
+    implementation("com.google.ads.mediation:applovin:13.0.0.1")
 }
